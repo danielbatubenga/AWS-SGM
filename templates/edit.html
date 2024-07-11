@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Edit Security Group</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Edit Security Group: {{ security_group.GroupName }} ({{ security_group.GroupId }})</a>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Edit Security Group: {{ security_group.GroupName }}</h1>
+
+        <h2>Ingress Rules</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Security group rule ID</th>
+                    <th>IP version</th>
+                    <th>Type</th>
+                    <th>Protocol</th>
+                    <th>Port range</th>
+                    <th>Source</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in security_group.IpPermissions %}
+                    {% for ip_range in rule.IpRanges %}
+                        <tr>
+                            <td>{{ ip_range.Description }}</td>
+                            <td>{{ rule.SecurityGroupRuleId }}</td>
+                            <td>IPv4</td>
+                            <td>{{ rule.Type }}</td>
+                            <td>{{ rule.IpProtocol }}</td>
+                            <td>{{ rule.FromPort }} - {{ rule.ToPort }}</td>
+                            <td>{{ ip_range.CidrIp }}</td>
+                            <td>
+                                <form action="{{ url_for('edit_security_group', group_id=security_group.GroupId) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="action" value="remove_ingress">
+                                    <input type="hidden" name="protocol" value="{{ rule.IpProtocol }}">
+                                    <input type="hidden" name="source" value="{{ ip_range.CidrIp }}">
+                                    <input type="hidden" name="port_range" value="{{ rule.FromPort }}-{{ rule.ToPort }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>                                
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2>Add Ingress Rule</h2>
+        <form action="{{ url_for('edit_security_group', group_id=security_group.GroupId) }}" method="POST" class="mb-4">
+            <input type="hidden" name="action" value="add_ingress">
+            <div class="form-row">
+                <div class="form-group col-md-2">
+                    <label for="name">Name</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="protocol">Protocol</label>
+                    <select class="form-control" id="protocol" name="protocol" required>
+                        <option value="tcp">TCP</option>
+                        <option value="udp">UDP</option>
+                        <option value="icmp">ICMP</option>
+                        <!-- Adicione outras opções conforme necessário -->
+                    </select>
+                </div>
+                <div class="form-group col-md-2">
+                    <label for="port_range">Port Range</label>
+                    <input type="text" class="form-control" id="port_range" name="port_range" placeholder="FromPort-ToPort" required>
+                </div>
+                <div class="form-group col-md-3">
+                    <label for="source">Source</label>
+                    <input type="text" class="form-control" id="source" name="source" placeholder="0.0.0.0/0" required>
+                </div>
+                <div class="form-group col-md-2">
+                    <button type="submit" class="btn btn-primary mt-4">Add Rule</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Egress Rules section, similar to Ingress Rules -->
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Check if a notification message is present in the URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const notification = urlParams.get('notification');
+
+        if (notification) {
+            let message = '';
+            if (notification === 'rule_added') {
+                message = 'Rule successfully added!';
+            } else if (notification === 'rule_removed') {
+                message = 'Rule successfully removed!';
+            }
+            if (message) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: message,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            }
+        }
+    </script>
+</body>
+</html>
